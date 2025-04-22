@@ -74,7 +74,7 @@ class AlbumMaker:
         self.frame_canvas.pack(side="left", fill="both", expand=True, padx=5)
 
         # Aumentar o tamanho inicial do canvas
-        self.canvas = tk.Canvas(self.frame_canvas, bg="white", width=700, height=500)  # Increased size
+        self.canvas = tk.Canvas(self.frame_canvas, bg="white", width=900, height=450)  # Increased size
         self.canvas.pack(fill="both", expand=True, pady=10)
 
         self.label_pagina = ttk.Label(self.frame_canvas, text="Nenhum álbum criado")
@@ -94,10 +94,14 @@ class AlbumMaker:
 
         ttk.Label(self.frame_direita, text="Modelos").pack()
         self.modelos = [
-            ("Modelo 1: 1 foto", 1),
-            ("Modelo 2: 2 fotos", 2),
-            ("Modelo 3: 3 fotos", 3),
-            ("Modelo 4: 4 fotos", 4)
+            ("Modelo 1", 1),
+            ("Modelo 2", 2),
+            ("Modelo 3", 3),
+            ("Modelo 4", 4),
+            ("Modelo 5", 5),
+            ("Modelo 6", 6),
+            ("Modelo 7", 7),
+            ("Modelo 8", 8)
         ]
         for texto, num_fotos in self.modelos:
             ttk.Button(self.frame_direita, text=texto, command=lambda n=num_fotos: self.selecionar_modelo(n)).pack(fill="x", pady=2)
@@ -121,12 +125,11 @@ class AlbumMaker:
         self.frame_miniaturas_inner.pack(expand=True)
 
         ttk.Label(self.frame_miniaturas_inner, text="Minhas Fotos").pack(side="left")
-        self.canvas_miniaturas = tk.Canvas(self.frame_miniaturas_inner, bg="white", height=80, width=750)
+        self.canvas_miniaturas = tk.Canvas(self.frame_miniaturas_inner, bg="white", height=80, width=800)
         self.canvas_miniaturas.pack(side="left", padx=5)
         self.canvas_miniaturas.bind("<Button-1>", self.selecionar_miniatura)
 
         ttk.Button(self.frame_miniaturas_inner, text="Deletar Fotos", command=self.deletar_fotos_selecionadas).pack(side="left", padx=5)
-        ttk.Button(self.frame_miniaturas_inner, text="Ordenar Páginas", command=self.ordenar_paginas).pack(side="right", padx=5)
 
         # Atualizar região de rolagem
         self.frame_principal.bind("<Configure>", lambda e: self.canvas_principal.configure(scrollregion=self.canvas_principal.bbox("all")))
@@ -446,9 +449,6 @@ class AlbumMaker:
             imagem_pagina.save(caminho_salvar, "JPEG")
 
         messagebox.showinfo("Sucesso", f"Álbum salvo em {pasta_album}!")
-
-    def ordenar_paginas(self):
-        messagebox.showinfo("Ordenar Páginas", "Funcionalidade de ordenação de páginas ainda não implementada.")
 
     def pagina_anterior(self):
         if self.pagina_atual > 0:
