@@ -2,13 +2,77 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from PIL import Image, ImageTk
 import os
+import uuid
 
 class AlbumMaker:
     def __init__(self, root):
         self.root = root
         self.root.title("Montador de Álbuns de Formatura")
+        
+        self.root.withdraw()
+        
+        self.tamanho_modelo = None
+        self.modelos_tamanhos = {
+            "42x29.7cm": (4961, 3508),
+            "29.7x21cm": (3508, 2480),
+            "21x14.8cm": (2480, 1748),
+            "10.5x10.5cm": (1240, 1240)
+        }
+        
+        self.selecionar_modelo_inicial()
 
-        # Definir tamanho inicial da janela como 80% da tela
+    def selecionar_modelo_inicial(self):
+        self.janela_modelo = tk.Toplevel(self.root)
+        self.janela_modelo.title("Seleção de Modelo")
+        self.janela_modelo.geometry("300x200")
+        self.janela_modelo.resizable(False, False)
+        
+        self.janela_modelo.update_idletasks()
+        width = self.janela_modelo.winfo_width()
+        height = self.janela_modelo.winfo_height()
+        x = (self.janela_modelo.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.janela_modelo.winfo_screenheight() // 2) - (height // 2)
+        self.janela_modelo.geometry(f'+{x}+{y}')
+        
+        ttk.Label(self.janela_modelo, text="Selecione o tamanho do álbum:").pack(pady=10)
+        
+        self.modelo_selecionado = tk.StringVar()
+        
+        for modelo in self.modelos_tamanhos.keys():
+            ttk.Radiobutton(
+                self.janela_modelo,
+                text=modelo,
+                value=modelo,
+                variable=self.modelo_selecionado,
+                command=self.verificar_selecao
+            ).pack(pady=5)
+        
+        self.botao_confirmar = ttk.Button(
+            self.janela_modelo,
+            text="Confirmar",
+            command=self.confirmar_modelo,
+            state="disabled"
+        )
+        self.botao_confirmar.pack(pady=10)
+        
+        self.janela_modelo.grab_set()
+        self.root.wait_window(self.janela_modelo)
+
+    def verificar_selecao(self):
+        if self.modelo_selecionado.get():
+            self.botao_confirmar.config(state="normal")
+
+    def confirmar_modelo(self):
+        if self.modelo_selecionado.get():
+            self.tamanho_modelo = self.modelos_tamanhos[self.modelo_selecionado.get()]
+            self.root.title(f"Montador de Álbuns de Formatura - {self.modelo_selecionado.get()}")
+            self.janela_modelo.destroy()
+            self.root.deiconify()
+            self.iniciar_interface()
+        else:
+            messagebox.showwarning("Aviso", "Por favor, selecione um modelo!")
+
+    def iniciar_interface(self):
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
         window_width = int(screen_width * 0.8)
@@ -35,7 +99,6 @@ class AlbumMaker:
 
         self.carregar_diretorio()
 
-        # Vincular evento de redimensionamento
         self.canvas.bind("<Configure>", self.on_resize)
 
     def configurar_interface(self):
@@ -47,14 +110,12 @@ class AlbumMaker:
         ttk.Button(self.frame_botoes, text="Limpar Álbum", command=self.limpar_album).pack(side="left", padx=5)
         ttk.Button(self.frame_botoes, text="Salvar Álbum", command=self.salvar_album).pack(side="right", padx=5)
 
-        # Criar canvas principal com barra de rolagem
         self.canvas_principal = tk.Canvas(self.root)
         self.scrollbar_y = ttk.Scrollbar(self.root, orient="vertical", command=self.canvas_principal.yview)
         self.canvas_principal.configure(yscrollcommand=self.scrollbar_y.set)
         self.scrollbar_y.pack(side="right", fill="y")
         self.canvas_principal.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Frame principal dentro do canvas
         self.frame_principal = ttk.Frame(self.canvas_principal)
         self.canvas_principal.create_window((0, 0), window=self.frame_principal, anchor="nw")
 
@@ -73,8 +134,7 @@ class AlbumMaker:
         self.frame_canvas = ttk.Frame(self.frame_principal)
         self.frame_canvas.pack(side="left", fill="both", expand=True, padx=5)
 
-        # Aumentar o tamanho inicial do canvas
-        self.canvas = tk.Canvas(self.frame_canvas, bg="white", width=900, height=450)  # Increased size
+        self.canvas = tk.Canvas(self.frame_canvas, bg="white", width=900, height=450)
         self.canvas.pack(fill="both", expand=True, pady=10)
 
         self.label_pagina = ttk.Label(self.frame_canvas, text="Nenhum álbum criado")
@@ -88,9 +148,8 @@ class AlbumMaker:
         self.botao_proxima = ttk.Button(self.frame_navegacao, text="Próxima Página", command=self.proxima_pagina, state="disabled")
         self.botao_proxima.pack(side="left", padx=5)
 
-        # Frame da direita com padding mínimo à direita
         self.frame_direita = ttk.Frame(self.frame_principal)
-        self.frame_direita.pack(side="right", fill="y", padx=(5, 0))  # Reduced right padding
+        self.frame_direita.pack(side="right", fill="y", padx=(5, 0))
 
         ttk.Label(self.frame_direita, text="Modelos").pack()
         self.modelos = [
@@ -106,7 +165,6 @@ class AlbumMaker:
         for texto, num_fotos in self.modelos:
             ttk.Button(self.frame_direita, text=texto, command=lambda n=num_fotos: self.selecionar_modelo(n)).pack(fill="x", pady=2)
 
-        # Adicionar seção de Fundos ao frame_direita
         ttk.Label(self.frame_direita, text="Fundos").pack(pady=5)
         self.frame_fundos = ttk.Frame(self.frame_direita)
         self.frame_fundos.pack(pady=5)
@@ -117,7 +175,6 @@ class AlbumMaker:
         self.canvas_fundos.pack(pady=5)
         self.canvas_fundos.bind("<Button-1>", self.selecionar_fundo)
 
-        # Frame de miniaturas na parte inferior e centralizado
         self.frame_miniaturas = ttk.Frame(self.root)
         self.frame_miniaturas.pack(side="bottom", fill="x", padx=10, pady=5)
 
@@ -131,7 +188,6 @@ class AlbumMaker:
 
         ttk.Button(self.frame_miniaturas_inner, text="Deletar Fotos", command=self.deletar_fotos_selecionadas).pack(side="left", padx=5)
 
-        # Atualizar região de rolagem
         self.frame_principal.bind("<Configure>", lambda e: self.canvas_principal.configure(scrollregion=self.canvas_principal.bbox("all")))
 
     def on_resize(self, event):
@@ -296,12 +352,19 @@ class AlbumMaker:
         self.modelos_paginas = []
         fotos_restantes = self.fotos_selecionadas.copy()
         idx = 0
+        pagina_idx = 0
         while idx < len(fotos_restantes):
-            modelo = 4
+            if pagina_idx == 1:  # Página 2 (índice 1) usa Modelo 2
+                modelo = 2
+            elif pagina_idx == 2:  # Página 3 (índice 2) usa Modelo 3
+                modelo = 3
+            else:
+                modelo = 4  # Outras páginas usam Modelo 4
             pagina = fotos_restantes[idx:idx + modelo]
             self.album_paginas.append(pagina)
             self.modelos_paginas.append(modelo)
             idx += modelo
+            pagina_idx += 1
         self.pagina_atual = 0
         self.botao_anterior.config(state="normal" if self.pagina_atual > 0 else "disabled")
         self.botao_proxima.config(state="normal" if len(self.album_paginas) > 1 else "disabled")
@@ -328,7 +391,7 @@ class AlbumMaker:
 
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
-        if canvas_width < 200 or canvas_height < 200:  # Increased minimum size check
+        if canvas_width < 200 or canvas_height < 200:
             return
 
         if self.fundo_imagem:
@@ -344,11 +407,15 @@ class AlbumMaker:
         self.label_pagina.config(text=f"Página {self.pagina_atual + 1} de {len(self.album_paginas)}")
 
         self.canvas.fotos = []
-        max_photo_size = min(canvas_width, canvas_height) * 3 // 4  # Increased photo size
+        max_photo_size = min(canvas_width, canvas_height) * 3 // 4
+        fixed_square_size = 300
+
         for i, caminho in enumerate(pagina):
             img = Image.open(caminho)
             if modelo == 1:
                 img.thumbnail((max_photo_size, max_photo_size))
+            elif modelo in [2, 3]:
+                img.thumbnail((fixed_square_size, fixed_square_size))
             else:
                 img.thumbnail((max_photo_size // 2, max_photo_size // 2))
             foto = ImageTk.PhotoImage(img)
@@ -359,11 +426,8 @@ class AlbumMaker:
                 x = canvas_width // 4 if i == 0 else 3 * canvas_width // 4
                 y = canvas_height // 2
             elif modelo == 3:
-                if i == 0:
-                    x, y = canvas_width // 2, canvas_height // 4
-                else:
-                    x = canvas_width // 4 if i == 1 else 3 * canvas_width // 4
-                    y = 3 * canvas_height // 4
+                x = canvas_width // 6 if i == 0 else (canvas_width // 2 if i == 1 else 5 * canvas_width // 6)
+                y = canvas_height // 2
             else:
                 x = canvas_width // 4 if i % 2 == 0 else 3 * canvas_width // 4
                 y = canvas_height // 4 if i < 2 else 3 * canvas_height // 4
@@ -396,21 +460,17 @@ class AlbumMaker:
             messagebox.showwarning("Aviso", "Nenhum álbum organizado!")
             return
 
-        pasta_album = os.path.join(self.diretorio_selecionado, "Album")
-        if not os.path.exists(pasta_album):
-            os.makedirs(pasta_album)
+        pasta_base = self.diretorio_selecionado
+        pasta_albuns_prontos = os.path.join(pasta_base, "Albuns Prontos")
+        if not os.path.exists(pasta_albuns_prontos):
+            os.makedirs(pasta_albuns_prontos)
 
-        canvas_width = self.canvas.winfo_width()
-        canvas_height = self.canvas.winfo_height()
-        if canvas_width / canvas_height > 16 / 9:
-            output_width = int(canvas_height * 16 / 9)
-            output_height = canvas_height
-        else:
-            output_width = canvas_width
-            output_height = int(canvas_width * 9 / 16)
+        output_width, output_height = self.tamanho_modelo
+        fixed_square_size_save = 1200
 
         for idx, pagina in enumerate(self.album_paginas):
-            imagem_pagina = Image.new("RGB", (output_width, output_height), self.fundo_atual if not self.fundo_imagem else (255, 255, 255))
+            imagem_pagina = Image.new("RGB", (output_width, output_height), 
+                                    self.fundo_atual if not self.fundo_imagem else (255, 255, 255))
 
             if self.fundo_imagem:
                 img_fundo = Image.open(self.fundo_imagem)
@@ -418,11 +478,30 @@ class AlbumMaker:
                 imagem_pagina.paste(img_fundo, (0, 0))
 
             modelo = self.modelos_paginas[idx]
-            max_photo_size = min(output_width, output_height) * 3 // 4  # Match increased size
+            max_photo_size = min(output_width, output_height) * 3 // 4
+
+            if pagina:
+                caminho_primeira_foto = pagina[0]
+                caminho_relativo = os.path.relpath(os.path.dirname(caminho_primeira_foto), pasta_base)
+                # Dividir o caminho relativo em partes
+                partes_caminho = caminho_relativo.split(os.sep)
+                # Adicionar o modelo ao último componente do caminho
+                partes_caminho[-1] = f"{partes_caminho[-1]} - {self.modelo_selecionado.get()}"
+                # Reconstruir o caminho relativo com o modelo incluído
+                caminho_relativo_com_modelo = os.sep.join(partes_caminho)
+                pasta_saida = os.path.join(pasta_albuns_prontos, caminho_relativo_com_modelo)
+                if not os.path.exists(pasta_saida):
+                    os.makedirs(pasta_saida)
+            else:
+                # Se não houver fotos na página, usar a pasta base com o modelo
+                pasta_saida = os.path.join(pasta_albuns_prontos, f"SemFotos - {self.modelo_selecionado.get()}")
+
             for i, caminho in enumerate(pagina):
                 img = Image.open(caminho)
                 if modelo == 1:
                     img.thumbnail((max_photo_size, max_photo_size))
+                elif modelo in [2, 3]:
+                    img.thumbnail((fixed_square_size_save, fixed_square_size_save))
                 else:
                     img.thumbnail((max_photo_size // 2, max_photo_size // 2))
 
@@ -432,11 +511,8 @@ class AlbumMaker:
                     x = output_width // 4 if i == 0 else 3 * output_width // 4
                     y = output_height // 2
                 elif modelo == 3:
-                    if i == 0:
-                        x, y = output_width // 2, output_height // 4
-                    else:
-                        x = output_width // 4 if i == 1 else 3 * output_width // 4
-                        y = 3 * output_height // 4
+                    x = output_width // 6 if i == 0 else (output_width // 2 if i == 1 else 5 * output_width // 6)
+                    y = output_height // 2
                 else:
                     x = output_width // 4 if i % 2 == 0 else 3 * output_width // 4
                     y = output_height // 4 if i < 2 else 3 * output_height // 4
@@ -445,10 +521,10 @@ class AlbumMaker:
                 img_y = y - img.size[1] // 2
                 imagem_pagina.paste(img, (img_x, img_y))
 
-            caminho_salvar = os.path.join(pasta_album, f"pagina_{idx + 1}.jpg")
+            caminho_salvar = os.path.join(pasta_saida, f"pagina_{idx + 1}.jpg")
             imagem_pagina.save(caminho_salvar, "JPEG")
 
-        messagebox.showinfo("Sucesso", f"Álbum salvo em {pasta_album}!")
+        messagebox.showinfo("Sucesso", f"Álbum salvo em {pasta_albuns_prontos} com estrutura de pastas!")
 
     def pagina_anterior(self):
         if self.pagina_atual > 0:
