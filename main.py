@@ -24,7 +24,7 @@ class AlbumMaker:
     def selecionar_modelo_inicial(self):
         self.janela_modelo = tk.Toplevel(self.root)
         self.janela_modelo.title("Seleção de Modelo")
-        self.janela_modelo.geometry("300x200")
+        self.janela_modelo.geometry("300x230")
         self.janela_modelo.resizable(False, False)
         
         self.janela_modelo.update_idletasks()
